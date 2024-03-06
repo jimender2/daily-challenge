@@ -1,12 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 from pydantic import BaseModel
+from fastapi.responses import HTMLResponse
+
 
 from sqlalchemy import create_engine, text
 
 import os
 from dotenv import load_dotenv
 
-from fastapi import FastAPI, Form
 from typing import Annotated
 
 
@@ -29,23 +30,35 @@ class Question(BaseModel):
 app = FastAPI()
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+@app.get("/", response_class=HTMLResponse)
+async def r():
+    return """<form action="/question" method="post">
+  <div>
+    <input type="text" id="user" name="user" />
+  </div>
+
+  <div class="button">
+    <button type="submit">Send your message</button>
+  </div>
+</form>
+"""
 
 
 @app.post("/question")
-async def postQuestionForm(user: Annotated[str, Form()]):
+async def postQuestionForm(user: str = Form(...)):
+    return getQuestionForUser(user)
+
+
+@app.post("/json/question")
+async def getQuestionJSON(question: Question):
+    user = question.user
     return getQuestion(user)
 
 
-# @app.post("/question")
-# async def getQuestionJSON(question: Question):
-#     user = question.user
-#     return getQuestion(user)
+def getQuestionForUser(user):
+    if user is None or len(user) == 0:
+        return {"Error": "Provide a user"}
 
-
-def getQuestion(user):
     result = getUser(user)
 
     if result == []:
@@ -79,15 +92,27 @@ def getQuestion(user):
 
 
 @app.post("/answer")
-async def postAnswer(userAnswer: Answer):
+async def postAnswer(user: str = Form(...), answer: str = Form(...)):
+
+    return submitAnswerForUser(user, answer)
+
+
+@app.post("/json/answer")
+async def postAnswerJSON(userAnswer: Answer):
 
     print(userAnswer)
 
     user = userAnswer.user
+
+    answer = userAnswer.answer
+
+    return submitAnswerForUser(user, answer)
+
+
+def submitAnswerForUser(user, answer):
     if user is None or len(user) == 0:
         return {"Error": "Provide a user"}
 
-    answer = userAnswer.answer
     if answer is None or len(answer) == 0:
         return {"Error": "Provide an answer"}
 
