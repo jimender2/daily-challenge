@@ -39,10 +39,10 @@ async def postQuestionForm(user: Annotated[str, Form()]):
     return getQuestion(user)
 
 
-@app.post("/question")
-async def getQuestionJSON(question: Question):
-    user = question.user
-    return getQuestion(user)
+# @app.post("/question")
+# async def getQuestionJSON(question: Question):
+#     user = question.user
+#     return getQuestion(user)
 
 
 def getQuestion(user):
