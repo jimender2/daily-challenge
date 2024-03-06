@@ -6,6 +6,10 @@ from sqlalchemy import create_engine, text
 import os
 from dotenv import load_dotenv
 
+from fastapi import FastAPI, Form
+from typing import Annotated
+
+
 load_dotenv()
 
 sqlURL = os.getenv("sql_url")
@@ -31,9 +35,17 @@ async def root():
 
 
 @app.post("/question")
-async def postQuestion(question: Question):
-    user = question.user
+async def postQuestionForm(user: Annotated[str, Form()]):
+    return getQuestion(user)
 
+
+@app.post("/question")
+async def getQuestionJSON(question: Question):
+    user = question.user
+    return getQuestion(user)
+
+
+def getQuestion(user):
     result = getUser(user)
 
     if result == []:
