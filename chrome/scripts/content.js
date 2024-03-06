@@ -7,7 +7,7 @@ function initial() {
 
     const button = document.createElement("button");
     button.id = "dailyChallenge";
-    button.textContent = "Click me to take the daily challenge";
+    button.textContent = "Click me to take the unofficial daily challenge";
     button.setAttribute("style", "border-radius:20px");
     button.addEventListener("click", showQuestion);
 
@@ -50,16 +50,24 @@ function showQuestion() {
       },
     ];
 
-    challenge.appendChild(createQuestion(questions[0]));
-
-    challengeHTML.insertAdjacentElement("afterend", challenge);
-
     var overalluser = "";
-    fetchSessionJSON().then((data) => {
-      console.log(data);
-      overalluser = data["current_user"]["username"];
-      console.log(overalluser);
-    });
+    fetchSessionJSON()
+      .then((data) => {
+        console.log(data);
+        overalluser = data["current_user"]["username"];
+        console.log(overalluser);
+      })
+      .then(() =>
+        getJSONQuestion(overalluser).then((question) => {
+          challenge.appendChild(createQuestion(question));
+
+          challengeHTML.insertAdjacentElement("afterend", challenge);
+        })
+      );
+
+    // challenge.appendChild(createQuestion(questions[0]));
+
+    // challengeHTML.insertAdjacentElement("afterend", challenge);
   } else {
     const stuffToRemove = document.querySelector("#dailyChallengeContainer");
     stuffToRemove.remove();
@@ -68,18 +76,41 @@ function showQuestion() {
 
 setTimeout(initial, 3000);
 
-async function postAnswerJSON(user, answer) {
-  var data = { user: user, answer: answer };
-  const response = await fetch("https://challenge.ctf.digital/answer", {
+function getJSONQuestion(username) {
+  var data = { user: username };
+
+  formData = new FormData();
+  for (const name in data) {
+    formData.append(name, data[name]);
+  }
+  const response = fetch("https://challenge.jimender2.net/question", {
     method: "POST", // *GET, POST, PUT, DELETE, etc.
     mode: "no-cors", // no-cors, *cors, same-origin
     cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-    headers: {
-      "Content-Type": "application/json",
-    },
     redirect: "follow", // manual, *follow, error
     referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-    body: JSON.stringify(data),
+    // body: JSON.stringify(data),
+    body: formData,
+  }).then((response) => {
+    return response.json();
+  });
+}
+
+async function postAnswerJSON(user, answer) {
+  var data = { user: user, answer: answer };
+
+  formData = new FormData();
+  for (const name in data) {
+    formData.append(name, data[name]);
+  }
+
+  const response = await fetch("https://challenge.jimender2.net/answer", {
+    method: "POST", // *GET, POST, PUT, DELETE, etc.
+    mode: "no-cors", // no-cors, *cors, same-origin
+    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    redirect: "follow", // manual, *follow, error
+    referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    body: formData,
   });
   const sessionJSON = await response.json();
   return sessionJSON;
